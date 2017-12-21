@@ -75,37 +75,4 @@ if __name__=="__main__":
     loss_his_train, loss_his_test = lmf(train_data, test_data)
     draw_plot(loss_his_train, loss_his_test)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
