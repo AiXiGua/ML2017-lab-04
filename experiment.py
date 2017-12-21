@@ -3,12 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 datasets_path = './ml-100k/' 
-USER_NUM = 943      #用户数目
-ITEM_NUM = 1682     #物品数目
-ALPHA = 0.01        #学习率
-LAMBDA = 0.01       #惩罚因子
-K = 10              #潜在特征数
-ITER_NUM = 30       #迭代训练次数
+USER_NUM = 943          #用户数目
+ITEM_NUM = 1682         #物品数目
+ALPHA = 0.01            #学习率
+LAMBDA = 0.01           #惩罚因子
+K = 10                  #潜在特征数
+ITER_NUM = 30           #最大迭代次数
+CONVERGENT = 0.01       #判断收敛的阈值
 
 #    draw the result
 def draw_plot(Loss_train, Loss_validation):
@@ -21,6 +22,15 @@ def draw_plot(Loss_train, Loss_validation):
     plt.title("Latent Factor Model")
     plt.show()
 
+# 判断是否收敛
+def is_convergent(loss_last, loss_cur):
+    return math.fabs(loss_last - loss_cur) <= CONVERGENT
+
+# 输出预测矩阵
+def output_pred_mat(P, Q):
+    R_pred = np.dot(P, Q.T)
+    print("The predictive matrix is:")
+    print(R_pred)
 
 def lmf(R_trian, R_test):
     P = np.random.rand(USER_NUM, K)    #P[i][k]: 用户i和隐因子r的相关性
@@ -50,11 +60,21 @@ def lmf(R_trian, R_test):
                     err_test_cur = R_test[i][j] - np.dot(P[i], Q[j])
                     loss_test.append(err_test_cur ** 2)
 
-        loss_his_train.append(np.mean(loss_train))
-        loss_his_test.append(np.mean(loss_test))
+        loss_train = np.mean(loss_train)
+        loss_test = np.mean(loss_test)
+        # 判断是否已经收敛，收敛则不继续迭代
+        if iter != 0 and is_convergent(loss_train, loss_his_train[-1]):
+            print("\nThe latent factor model is convergent at iteration %d.\n" % iter)
+            break
+        else:
+            loss_his_train.append(loss_train)
+            loss_his_test.append(loss_test)
+
         if iter % 10 == 0:
-            print("Iteration: %d \tMean loss of train: %.2f \tMean loss of validation: %.2f"%
-                (iter, np.mean(loss_train), np.mean(loss_test)))
+            print("Iteration: %d \tMean loss of train: %.2f \tMean loss of validation: %.2f" %
+                (iter, loss_train, loss_test))
+
+    output_pred_mat(P, Q)
     return loss_his_train, loss_his_test
 
 def load_ml_data(filename):
@@ -70,7 +90,7 @@ if __name__=="__main__":
     train_data = load_ml_data('u1.base')
     test_data = load_ml_data('u1.test')
     print("================       Preference Setup        ================")
-    print("Alpha: %.2f\t Lambda: %.2f\tK: %d\tIteration number: %d"%(ALPHA, LAMBDA, K, ITER_NUM))
+    print("Alpha: %.2f\t Lambda: %.2f\tK: %d\tIteration number: %d" % (ALPHA, LAMBDA, K, ITER_NUM))
     print("================ Start latent factor model fit ================")
     loss_his_train, loss_his_test = lmf(train_data, test_data)
     draw_plot(loss_his_train, loss_his_test)
